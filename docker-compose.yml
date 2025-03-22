@@ -1,16 +1,25 @@
 services:
   marzban-node:
     # build: .
-    image: gozargah/marzban-node:latest
+    image: gozargah/marzban-node:v0.5.1
     restart: always
     network_mode: host
 
-    # env_file: .env
     environment:
-      SSL_CERT_FILE: "/var/lib/marzban-node/ssl_cert.pem"
-      SSL_KEY_FILE: "/var/lib/marzban-node/ssl_key.pem"
-      # SSL_CLIENT_CERT_FILE: "/var/lib/marzban-node/ssl_client_cert.pem"
-      # SERVICE_PROTOCOL: "rest"
+       SSL_CLIENT_CERT_FILE: "/var/lib/marzban-node/darin_cert.pem"
+       SERVICE_PROTOCOL: rest
+       DNS_CONFIG_FILE: "/var/lib/marzban-node/dns_config.json"
+       DEBUG: true
+       
+    ports:
+      - 62050:62050
+      - 62051:62051
+      - 6001:6001
+      - 6002:6002
+      - 6003:6003
 
     volumes:
       - /var/lib/marzban-node:/var/lib/marzban-node
+      - /usr/local/share/xray:/usr/local/share/xray
+      - /opt/Marzban-node/config.py:/code/config.py
+      - /opt/Marzban-node/xray.py:/code/xray.py
