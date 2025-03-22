@@ -21,5 +21,5 @@ services:
     volumes:
       - /var/lib/marzban-node:/var/lib/marzban-node
       - /usr/local/share/xray:/usr/local/share/xray
-      - /opt/Marzban-node/config.py:/code/config.py
-      - /opt/Marzban-node/xray.py:/code/xray.py
+      - /opt/Darin-node/config.py:/code/config.py
+      - /opt/Darin-node/xray.py:/code/xray.py
