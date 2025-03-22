@@ -20,3 +20,4 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 SERVICE_PROTOCOL = config('SERVICE_PROTOCOL', cast=str, default='rest')
 
 INBOUNDS = config("INBOUNDS", cast=lambda v: [x.strip() for x in v.split(',')], default="")
+DNS_CONFIG_FILE = config("DNS_CONFIG_FILE", default="")
