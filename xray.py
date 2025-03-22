@@ -1,12 +1,13 @@
 import atexit
 import json
+import os
 import re
 import subprocess
 import threading
 from collections import deque
 from contextlib import contextmanager
 
-from config import DEBUG, SSL_CERT_FILE, SSL_KEY_FILE, XRAY_API_HOST, XRAY_API_PORT, INBOUNDS
+from config import DEBUG, SSL_CERT_FILE, SSL_KEY_FILE, XRAY_API_HOST, XRAY_API_PORT, INBOUNDS, DNS_CONFIG_FILE
 from logger import logger
 
 
@@ -27,16 +28,34 @@ class XRayConfig(dict):
 
         super().__init__(config)
         self._apply_api()
+        self._apply_dns()
 
     def to_json(self, **json_kwargs):
         return json.dumps(self, **json_kwargs)
+        
+    def _apply_dns(self):
+        if DNS_CONFIG_FILE and os.path.isfile(DNS_CONFIG_FILE):
+            try:
+                with open(DNS_CONFIG_FILE, 'r') as f:
+                    dns_config = json.load(f)
+                
+                if 'dns' in dns_config:
+                    self['dns'] = dns_config['dns']
+                    logger.info(f"Applied DNS configuration from {DNS_CONFIG_FILE}")
+                else:
+                    logger.warning(f"DNS configuration file {DNS_CONFIG_FILE} does not contain a 'dns' key")
+            except Exception as e:
+                logger.error(f"Failed to parse DNS configuration from {DNS_CONFIG_FILE}: {e}")
 
     def _apply_api(self):
         for inbound in self.get('inbounds', []).copy():
             if inbound.get('protocol') == 'dokodemo-door' and inbound.get('tag') == 'API_INBOUND':
                 self['inbounds'].remove(inbound)
                 
-            elif INBOUNDS and inbound.get('tag') not in INBOUNDS:
+            elif (INBOUNDS and 
+                  any(tag.strip() for tag in INBOUNDS) and
+                  inbound.get('tag') not in INBOUNDS and 
+                  inbound.get('tag') != 'HANDSHAKE_DEST'):  # Always keep HANDSHAKE_DEST
                 self['inbounds'].remove(inbound)
 
         for rule in self.get('routing', {}).get("rules", []):
@@ -95,8 +114,7 @@ class XRayConfig(dict):
         except KeyError:
             self["routing"] = {"rules": []}
             self["routing"]["rules"].insert(0, rule)
-
-
+            
 class XRayCore:
     def __init__(self,
                  executable_path: str = "/usr/bin/xray",
